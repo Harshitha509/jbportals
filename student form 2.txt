@@ -1,0 +1,131 @@
+STUDENT FORM.JS --->
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const StudentForm = () => {
+  const [studentId, setStudentId] = useState('');
+  const [studentName, setStudentName] = useState('');
+  const [studentDob, setStudentDob] = useState('');
+  const [branchId, setBranchId] = useState('');
+  const [students, setStudents] = useState([]);
+  const [showStudents, setShowStudents] = useState(false); // State to control visibility
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/student/create', {
+        id: studentId,
+        name: studentName,
+        dob: studentDob,
+        branch_id: branchId,
+      });
+
+      if (response.status === 200) {
+        // Student created successfully
+        console.log('Student created successfully!');
+        // Refresh the list of students after creating a new student
+        loadStudents();
+      } else {
+        // Handle errors
+        console.error('Failed to create student:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+    }
+  };
+
+  const loadStudents = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:5000/list/students');
+
+      if (response.status === 200) {
+        setStudents(response.data);
+        setShowStudents(true); // Show the list when it is loaded
+      } else {
+        console.error('Failed to fetch students:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+    }
+  };
+
+  useEffect(() => {
+    // Load students on component mount
+    loadStudents();
+  }, []); // Empty dependency array ensures this effect runs once on mount
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <label>
+          Student ID:
+          <input
+            type="text"
+            value={studentId}
+            onChange={(e) => setStudentId(e.target.value)}
+          />
+        </label>
+        <br />
+        <br />
+        <label>
+          Student Name:
+          <input
+            type="text"
+            value={studentName}
+            onChange={(e) => setStudentName(e.target.value)}
+          />
+        </label>
+        <br />
+        <br />
+        <label>
+          Date of Birth:
+          <input
+            type="text"
+            value={studentDob}
+            onChange={(e) => setStudentDob(e.target.value)}
+          />
+        </label>
+        <br />
+        <br />
+        <label>
+          Branch ID:
+          <input
+            type="text"
+            value={branchId}
+            onChange={(e) => setBranchId(e.target.value)}
+          />
+        </label>
+        <br />
+        <br />
+        <button type="submit">Save</button>
+      </form>
+
+      {/* Button to toggle the visibility of the list of students */}
+      <button onClick={() => setShowStudents(!showStudents)}>
+        {showStudents ? 'Hide Students' : 'Show Students'}
+      </button>
+
+      {/* Display the list of students if showStudents is true */}
+      {showStudents && (
+        <div className="student-list">
+          <h2>List of Students:</h2>
+          <ul>
+            {students.map((student) => (
+              <li key={student.student_id}>
+                <strong>ID:</strong> {student.student_id},{' '}
+                <strong>Name:</strong> {student.student_name},{' '}
+                <strong>DOB:</strong> {student.student_dob},{' '}
+                <strong>Branch ID:</strong> {student.branch_id},{' '}
+                <strong>Branch Name:</strong> {student.branch_name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default StudentForm;
