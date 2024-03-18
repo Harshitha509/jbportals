@@ -1,0 +1,45 @@
+Average Directional Index (ADX):-
+
+import pandas as pd
+from ta.trend import ADXIndicator
+import matplotlib.pyplot as plt
+import warnings
+
+# Read the OHLC data from a CSV file
+ohlc = pd.read_csv("nifty.csv", parse_dates=["date"], index_col="date")
+
+# Create an ADXIndicator instance with a window of 14
+adx = ADXIndicator(high=ohlc.high, low=ohlc.low, close=ohlc.close, window=14, fillna=False)
+
+# Calculate ADX, Plus Directional Indicator (+DI), and Minus Directional Indicator (-DI)
+ohlc['plus_di'] = adx.adx_pos()
+ohlc['minus_di'] = adx.adx_neg()
+ohlc['adx'] = adx.adx()
+
+# Display the last 10 rows of the DataFrame with calculated values
+ohlc.tail(10)
+
+# Set up the plot configurations
+plt.rcParams['figure.figsize'] = (20, 10)
+plt.style.use('fivethirtyeight')
+
+# Create subplots for NIFTY Close and NIFTY ADX 14
+ax1 = plt.subplot2grid((11, 1), (0, 0), rowspan=5, colspan=1)
+ax2 = plt.subplot2grid((11, 1), (6, 0), rowspan=5, colspan=1)
+
+# Plot NIFTY Close in the first subplot
+ax1.plot(ohlc['close'], linewidth=2, color='#ff9800')
+ax1.set_title('NIFTY Close')
+
+# Plot NIFTY ADX 14 in the second subplot
+ax2.plot(ohlc['adx'], color='#2196f3', label='ADX 14', linewidth=3)
+
+# Add a horizontal line at ADX level 25 for reference
+ax2.axhline(25, color='grey', linewidth=2, linestyle='--')
+
+# Add legend and set the title for the second subplot
+ax2.legend()
+ax2.set_title('NIFTY ADX 14')
+
+# Display the plot
+plt.show()

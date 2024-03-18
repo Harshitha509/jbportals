@@ -1,0 +1,29 @@
+.ReactTable {
+  border-collapse: collapse; 
+  width: 100%; 
+}
+
+.ReactTable .rt-th,
+.ReactTable .rt-td {
+  border: 1px solid #ddd; 
+  padding: 8px; 
+  text-align: left; 
+}
+
+.ReactTable .rt-thead .rt-th,
+.ReactTable .rt-tbody .rt-td {
+  border-bottom: 2px solid #ddd; 
+}
+
+.ReactTable .rt-thead.-header {
+  background-color: #f4f4f4; 
+  font-weight: bold;
+}
+
+.ReactTable .rt-tbody .rt-tr:hover {
+  background-color: #f9f9f9; 
+}
+.date-input {
+  padding: 8px;
+  font-size: 16px;
+}

@@ -1,0 +1,77 @@
+import pandas as pd
+import numpy as np
+
+# Read the minute-by-minute price data from a CSV file
+df = pd.read_csv("minute.csv")
+df.head(2)
+
+# Set the brick size for Renko chart
+brick_size = 5
+
+# Initialize a new DataFrame for Renko chart
+df2 = pd.DataFrame(columns=['date', 'open', 'high', 'low', 'close'], data=[])
+df2.loc[0] = df.iloc[0]
+
+# Calculate the initial close for the first row in the Renko chart
+close = df.iloc[0]['close'] // brick_size * brick_size
+df2.iloc[0, 1:] = [close - brick_size]
+
+# Initialize the color of the Renko bricks
+df2['color'] = 'Green'
+
+# Define columns for the Renko DataFrame
+columns = ['date', 'open', 'high', 'low', 'close', 'color']
+
+# Loop through the minute-by-minute data to construct the Renko chart
+for index, row in df.iterrows():
+    close = row['close']
+    date = row['date']
+    last_row = df2.iloc[-1]
+    prv_color = last_row['color']
+    prv_close = last_row['close']
+    
+    # Calculate the number of bricks based on the price movement
+    bricks = int((close - prv_close) / brick_size)
+    data = []    
+    
+    # Determine the color of the Renko bricks and update the DataFrame
+    if prv_color == 'Green' and bricks >= 1:
+        color = 'Green'
+        for i in range(bricks):
+            t = [date, prv_close, prv_close + brick_size, prv_close, prv_close + brick_size, color]
+            data.append(t)
+            prv_close += brick_size
+    elif prv_color == 'Green' and bricks <= -2:
+        color = 'Red'
+        bricks += 1
+        prv_close -= brick_size
+        for i in range(abs(bricks)):
+            t = [date, prv_close, prv_close, prv_close - brick_size, prv_close - brick_size, color]
+            data.append(t)
+            prv_close -= brick_size
+    elif prv_color == 'Red' and bricks <= -1:
+        color = 'Red'
+        for i in range(abs(bricks)):
+            t = [date, prv_close, prv_close, prv_close - brick_size, prv_close - brick_size, color]
+            data.append(t)
+            prv_close -= brick_size
+    elif prv_color == 'Red' and bricks >= 2:
+        color = 'Green'
+        bricks -= 1
+        prv_close += brick_size
+        for i in range(abs(bricks)):
+            t = [date, prv_close, prv_close + brick_size, prv_close, prv_close + brick_size, color]
+            data.append(t)
+            prv_close += brick_size
+    else:
+        continue
+    
+    # Create a DataFrame from the calculated data and concatenate it with the main Renko DataFrame
+    df3 = pd.DataFrame(data=data, columns=columns)
+    df2 = pd.concat([df2, df3])
+
+# Reset the index of the Renko DataFrame
+df2.reset_index(inplace=True, drop=True)
+
+# Display the last 10 rows of the Renko DataFrame with date and color
+df2[['date', 'color']].tail(10)

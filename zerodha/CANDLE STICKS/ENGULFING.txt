@@ -1,0 +1,78 @@
+Engulfing
+
+import pandas as pd
+import numpy as np
+import talib
+import plotly.graph_objects as go
+import datetime
+
+df = pd.read_csv("nifty5min.csv")
+
+# Set the date as the index and keep relevant columns
+df.set_index("Date", inplace=True)
+df = df[['Open', 'High', 'Low', 'Close']]
+
+# Use TA-Lib to identify Engulfing candles
+engulf = talib.CDLENGULFING(df['Open'], df['High'], df['Low'], df['Close'])
+df['engulf'] = engulf
+df['SignalGreen'] = False
+df['SignalRed'] = False
+df['body'] = abs(df['Open'] - df['Close'])
+
+# Function to create signals based on Engulfing pattern
+def createsignal(engulf):
+    SignalGreen = []
+    SignalRed = []
+    i = 0
+    for date, value in engulf.iteritems():
+        if value == 100:
+            SignalGreen.append(df['High'].iloc[i] + 10)
+            df['SignalGreen'].iat[i] = True
+            SignalRed.append(np.nan)
+        elif value == -100:
+            SignalRed.append(df['High'].iloc[i] + 10)
+            SignalGreen.append(np.nan)
+            df['SignalRed'].iat[i] = True
+        else:
+            SignalGreen.append(np.nan)
+            SignalRed.append(np.nan)
+        i += 1
+    return SignalGreen, SignalRed
+
+# Identify Engulfing candles
+engulf[engulf != 0]
+
+# Create Engulfing signals
+SignalGreen, SignalRed = createsignal(engulf)
+x = df.index.tolist()
+
+# Create a candlestick chart with Engulfing signals
+fig = go.Figure(data=[go.Candlestick(x=df.index, open=df.Open, high=df.High, low=df.Low, close=df.Close)])
+
+fig.update_layout(xaxis_rangeslider_visible=False)
+fig.update_layout(
+    width=800, height=600,
+    title="Nifty",
+    yaxis_title='Price',
+    xaxis=dict(type="category")
+)
+
+# Add Engulfing signals to the chart
+fig.add_trace(go.Scatter(
+    x=x,
+    y=SignalGreen,
+    name='Engulfing Green',
+    mode="markers",
+    marker_size=10,
+    marker=dict(color='green', symbol="square-dot")
+))
+
+fig.add_trace(go.Scatter(
+    x=x,
+    y=SignalRed,
+    name='Engulfing Red',
+    mode="markers",
+    marker_size=10,
+    marker=dict(color='red', symbol="square-dot")
+))
+fig.show()

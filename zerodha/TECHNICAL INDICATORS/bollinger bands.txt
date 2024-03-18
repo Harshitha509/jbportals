@@ -1,0 +1,44 @@
+Bollinger Bands:-
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Read the OHLC data from a CSV file
+df = pd.read_csv("nifty.csv", parse_dates=["date"], index_col="date")
+df.head(2)
+
+# Select data for the year 2020
+df_part = df.loc["2020"]
+
+# Set the range period for Bollinger Bands calculation
+range_period = 20
+
+# Calculate Simple Moving Average (SMA)
+sma = df_part.close.rolling(range_period).mean() 
+
+# Calculate Standard Deviation (std)
+std = df_part.close.rolling(range_period).std()
+
+# Calculate Bollinger Bands
+bollinger_up = sma + std * 2
+bollinger_down = sma - std * 2
+
+# Get the index for plotting
+index = df_part.index
+
+# Create a figure and plot SMA, Bollinger Bands, and Close prices
+plt.figure(figsize=(18,10))
+plt.plot(sma, label='SMA', c='orange')
+plt.plot(index, bollinger_up, label='Bollinger Up', c='g')
+plt.plot(index, bollinger_down, label='Bollinger Down', c='g')
+close = df_part['close'].tolist()
+plt.plot(index, close, label='Close', c='gray')
+
+# Fill the area between Bollinger Bands
+plt.fill_between(index, bollinger_up, bollinger_down, color='g', alpha=0.25)
+
+# Add legend
+plt.legend()
+
+# Show the plot
+plt.show()

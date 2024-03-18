@@ -1,0 +1,52 @@
+ Moving Average Convergence and Divergence (MACD):-
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Read the OHLC data from a CSV file
+df = pd.read_csv("nifty.csv", parse_dates=["date"], index_col="date")
+df[['close']].head()
+
+# Define a function for calculating MACD
+def MACD(data, fast_ma_period, slow_ma_period, signal_period):
+    # Exponential Moving Average for fast and slow periods
+    data["FMA"] = data['close'].ewm(span=fast_ma_period).mean()
+    data["SMA"] = data['close'].ewm(span=slow_ma_period).mean()
+    
+    # MACD line calculation
+    data["MACD"] = data["FMA"] - data["SMA"]
+    
+    # Signal line calculation using Exponential Moving Average
+    data["Signal"] = data['MACD'].ewm(span=signal_period).mean()
+    
+    return data
+
+# Define parameters for MACD calculation
+fast = 14
+slow = 23
+signal = 9
+
+# Calculate MACD and Signal lines using the defined function
+df_MACD = MACD(df, fast, slow, signal)
+
+# Display the last rows of the DataFrame with calculated values
+df_MACD[["close", "MACD", "Signal"]].tail()
+
+# Extract data for the year 2020
+data2020 = df_MACD[["MACD", "Signal", 'close']].loc["2020"]
+
+# Create subplots for MACD and Signal lines, and close prices
+fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(18, 12))
+
+# Plot MACD and Signal lines in the first subplot
+ax1.plot(data2020[['MACD']], label='MACD')
+ax1.plot(data2020[['Signal']], label='Signal')
+ax1.legend(loc="upper left")
+
+# Plot close prices in the second subplot
+ax2.plot(data2020[['close']], label='close')
+ax2.legend(loc="upper left")
+
+# Show the plot
+plt.show()

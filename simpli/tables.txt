@@ -1,0 +1,131 @@
+MYSQL TABLES:
+
+Users:
+
+CREATE TABLE Users (
+  user_id INT AUTO_INCREMENT PRIMARY KEY,
+  user_email VARCHAR(255) UNIQUE NOT NULL,  
+  user_password VARCHAR(255) NOT NULL,
+  user_role ENUM('admin', 'staff', 'parent') NOT NULL,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL,
+  user_title ENUM('Mr', 'Mrs', 'Ms'),
+  user_mobile VARCHAR(20) NOT NULL
+);
+
+Students:
+
+CREATE TABLE Students (
+  student_id INT PRIMARY KEY,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL,
+  batch_name VARCHAR(255) NOT NULL,
+  date_of_birth DATE NOT NULL,
+  student_hobbies TEXT,
+  student_address TEXT,
+  student_location TEXT,
+  student_emergency_contact VARCHAR(255),
+  student_physician VARCHAR(255),
+  student_allergies TEXT,
+  student_chronic_illness TEXT,
+  student_medication TEXT,
+  student_special_note TEXT,
+  CONSTRAINT fk_student_batch FOREIGN KEY (batch_name) REFERENCES batches(batch_name)
+);
+
+
+Student_Parent:
+
+CREATE TABLE Student_Parent (
+  student_id INT NOT NULL,
+  parent_id INT NOT NULL,
+  CONSTRAINT fk_student_student_parent FOREIGN KEY (student_id) REFERENCES Students(student_id),
+  CONSTRAINT fk_parent_student_parent FOREIGN KEY (parent_id) REFERENCES Users(user_id),
+  PRIMARY KEY (student_id, parent_id)
+);
+
+Plans:
+
+CREATE TABLE Plans (
+  plan_id INT AUTO_INCREMENT PRIMARY KEY,
+  plan_name VARCHAR(255) NOT NULL,
+  plan_duration INT NOT NULL,
+  plan_price DECIMAL(10,2) NOT NULL,
+  plan_isActive BOOLEAN NOT NULL
+
+Enrollments:
+
+CREATE TABLE Enrollments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  student_id INT NOT NULL,
+  plan_id INT NOT NULL,
+  planned_start_date DATE NOT NULL,
+  actual_start_date DATE,
+  planned_end_date DATE,
+  actual_end_date DATE,
+  CONSTRAINT fk_enrollment_student FOREIGN KEY (student_id) REFERENCES Students(student_id),
+  CONSTRAINT fk_enrollment_plan FOREIGN KEY (plan_id) REFERENCES Plans(plan_id)
+);
+
+Attendances:
+
+CREATE TABLE Attendances (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  batch_name VARCHAR(255) NOT NULL,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL,
+  date DATE NOT NULL,
+  status ENUM('present', 'absent') NOT NULL,
+  hours_attended DECIMAL(5,2),
+  reason_for_absence TEXT,
+  CONSTRAINT attendance_batch FOREIGN KEY (batch_name) REFERENCES Batches(batch_name),
+  CONSTRAINT attendance_first_name FOREIGN KEY (first_name) REFERENCES Students(first_name),
+  CONSTRAINT attendance_last_name FOREIGN KEY (last_name) REFERENCES Students(last_name),
+);
+
+Batches:
+
+CREATE TABLE Batches (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  batch_id VARCHAR(255) UNIQUE NOT NULL,
+  batch_name VARCHAR(255) UNIQUE NOT NULL,  
+  day ENUM('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'),
+  time TIME NOT NULL,
+  plan_id INT NOT NULL,
+  CONSTRAINT fk_batch_plan FOREIGN KEY (plan_id) REFERENCES Plans(plan_id)
+);
+
+Staff:
+
+CREATE TABLE Staff (
+  staff_id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  staff_first_name VARCHAR(255) NOT NULL,
+  staff_last_name VARCHAR(255) NOT NULL,
+  staff_address TEXT,
+  CONSTRAINT fk_staff_user FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+
+Staff attendance:
+
+CREATE TABLE Staff_Attendance (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  staff_id INT NOT NULL,
+  batch_id INT NOT NULL,
+  date DATE NOT NULL,
+  hours_taught DECIMAL(5,2) NOT NULL,
+  comment TEXT,
+  CONSTRAINT fk_staff_attendance_staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id),
+  CONSTRAINT fk_staff_attendance_batch FOREIGN KEY (batch_id) REFERENCES Batches(id)
+);
+
+Batch timing:
+
+CREATE TABLE Batch_Timing (
+  batch_id INT NOT NULL,
+  weekday ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday') NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  CONSTRAINT fk_batch_timing_batch FOREIGN KEY (batch_id) REFERENCES Batches(id),
+  PRIMARY KEY (batch_id, weekday)
+);

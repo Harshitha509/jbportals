@@ -1,0 +1,84 @@
+SUPERTREND:-
+
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+
+# Read the dataset into a Pandas DataFrame
+df = pd.read_csv("nifty.csv", parse_dates=["date"], index_col="date")
+df.head(2)
+
+# Function to calculate Average True Range (ATR)
+def ATR(df, range_period):
+    # Calculate True Range
+    df['High-Low'] = df['high'] - df['low']
+    df['High-Previous_Close'] = abs(df['high'] - df['close'].shift(1))
+    df['Low-Previous_Close'] = abs(df['low'] - df['close'].shift(1))
+    df['True_Range'] = df[['High-Low', 'High-Previous_Close', 'Low-Previous_Close']].max(axis=1, skipna=False)
+    
+    # Calculate Average True Range (ATR)
+    df['ATR'] = df['True_Range'].ewm(com=range_period, min_periods=range_period).mean()
+    return df
+
+# Set ATR and Supertrend parameters
+range_period = 7
+multiplier = 3
+
+# Calculate ATR using the defined function
+df = ATR(df, range_period)
+df.dropna(inplace=True)
+df[['close', 'ATR']].tail(2)
+
+# Calculate upper Bollinger Band components
+df['basic_upper_band'] = (df.high + df.low) / 2 + multiplier * df['ATR']
+df['final_upper_band'] = 0.00
+
+# Loop to calculate final upper band
+for i in range(range_period, len(df)):
+    if df['close'][i-1] <= df['final_upper_band'][i-1]:
+        df['final_upper_band'].iat[i] = min(df['basic_upper_band'].iat[i], df['final_upper_band'].iat[i-1])
+    else:
+        df['final_upper_band'].iat[i] = df['basic_upper_band'].iat[i]
+
+df.loc[df.index >= '2022-07-06', ['close', 'final_upper_band', 'basic_upper_band']]
+
+# Calculate lower Bollinger Band components
+df['basic_lower_band'] = (df.high + df.low) / 2 - multiplier * df['ATR']
+df['final_lower_band'] = 0.00
+
+# Loop to calculate final lower band
+for i in range(range_period, len(df)):
+    if df['close'][i-1] >= df['final_lower_band'][i-1]:
+        df['final_lower_band'].iat[i] = max(df['basic_lower_band'].iat[i], df['final_lower_band'].iat[i-1])
+    else:
+        df['final_lower_band'].iat[i] = df['basic_lower_band'].iat[i]
+
+df[['close', 'final_lower_band', 'basic_lower_band']].tail(10)
+
+# Initialize Supertrend
+df['SuperTrend'] = np.nan
+
+# Initial condition for Supertrend
+if df['close'].iat[range_period] <= df['final_upper_band'].iat[range_period]:
+    df['SuperTrend'].iat[range_period+1] = df['final_upper_band'].iat[range_period+1]
+else:
+    df['SuperTrend'].iat[range_period+1] = df['final_lower_band'].iat[range_period+1]
+
+df[['close', 'final_upper_band', 'final_lower_band', 'SuperTrend']].head(10)
+
+# Loop to update Supertrend
+for i in range(range_period, len(df)):
+    if df['SuperTrend'].iat[i-1] == df['final_upper_band'].iat[i-1] and df['close'].iat[i] <= df['final_upper_band'].iat[i]:        
+        df['SuperTrend'].iat[i] = df['final_upper_band'].iat[i]
+    elif df['SuperTrend'].iat[i-1] == df['final_upper_band'].iat[i-1] and df['close'][i] >= df['final_upper_band'].iat[i]:
+        df['SuperTrend'].iat[i] = df['final_lower_band'].iat[i]
+    elif df['SuperTrend'].iat[i-1] == df['final_lower_band'].iat[i-1] and df['close'][i] >= df['final_lower_band'].iat[i]:
+        df['SuperTrend'].iat[i] = df['final_lower_band'].iat[i]
+    elif df['SuperTrend'].iat[i-1] == df['final_lower_band'].iat[i-1] and df['close'][i] <= df['final_lower_band'].iat[i]:
+        df['SuperTrend'].iat[i] = df['final_upper_band'].iat[i]
+
+df.dropna(inplace=True)
+df[['close', 'SuperTrend']].tail(10)
+
+# Create additional columns for visualization
+df['direction'] = np.where(df

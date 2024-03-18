@@ -1,0 +1,80 @@
+ Harami Cross Candle
+
+import pandas as pd
+import numpy as np
+import talib
+import plotly.graph_objects as go
+import datetime
+
+# Read the CSV file into a DataFrame
+df = pd.read_csv("nifty5min.csv")
+
+# Set the date as the index and keep relevant columns
+df.set_index("Date", inplace=True)
+df = df[['Open', 'High', 'Low', 'Close']]
+
+# Use TA-Lib to identify Harami Cross candles
+harami_cross = talib.CDLHARAMICROSS(df['Open'], df['High'], df['Low'], df['Close'])
+df['harami_cross'] = harami_cross
+df['SignalGreen'] = False
+df['SignalRed'] = False
+df['body'] = abs(df['Open'] - df['Close'])
+
+# Function to create signals based on Harami Cross pattern
+def createsignal(harami_cross):
+    SignalGreen = []
+    SignalRed = []
+    i = 0
+    for date, value in harami_cross.iteritems():
+        if value == 100:
+            SignalGreen.append(df['High'].iloc[i] + 10)
+            df['SignalGreen'].iat[i] = True
+            SignalRed.append(np.nan)
+        elif value == -100:
+            SignalRed.append(df['High'].iloc[i] + 10)
+            SignalGreen.append(np.nan)
+            df['SignalRed'].iat[i] = True
+        else:
+            SignalGreen.append(np.nan)
+            SignalRed.append(np.nan)
+        i += 1
+    return SignalGreen, SignalRed
+
+# Identify Harami Cross candles
+harami_cross[harami_cross != 0]
+
+# Create Harami Cross signals
+SignalGreen, SignalRed = createsignal(harami_cross)
+x = df.index.tolist()
+
+# Create a candlestick chart with Harami Cross signals
+fig = go.Figure(data=[go.Candlestick(x=df.index, open=df.Open, high=df.High, low=df.Low, close=df.Close)])
+
+fig.update_layout(xaxis_rangeslider_visible=False)
+fig.update_layout(
+    width=800, height=600,
+    title="Nifty",
+    yaxis_title='Price',
+    xaxis=dict(type="category")
+)
+
+# Add Harami Cross signals to the chart
+fig.add_trace(go.Scatter(
+    x=x,
+    y=SignalGreen,
+    name='Harami Cross Green',
+    mode="markers",
+    marker_size=10,
+    marker=dict(color='green', symbol="square-dot")
+))
+
+fig.add_trace(go.Scatter(
+    x=x,
+    y=SignalRed,
+    name='Harami Cross Red',
+    mode="markers",
+    marker_size=10,
+    marker=dict(color='red', symbol="square-dot")
+))
+
+fig.show()

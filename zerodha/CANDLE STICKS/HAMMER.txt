@@ -1,0 +1,71 @@
+ Hammer Candle
+
+import pandas as pd
+import numpy as np
+import talib
+import plotly.graph_objects as go
+import datetime
+
+# Read the CSV file into a DataFrame
+df = pd.read_csv("Infy13Jan.csv")
+
+# Extract and format date
+df['Date'] = df['Date'].astype(str).str[4:21]
+df['Date'] = pd.to_datetime(df['Date'])
+
+# Filter data for dates after '2023-01-13 9:10:00'
+df = df[df['Date'] > '2023-01-13 9:10:00']
+
+# Set the date as the index and keep relevant columns
+df.set_index("Date", inplace=True)
+df = df[['Open', 'High', 'Low', 'Close']]
+
+# Use TA-Lib to identify Hammer candles
+hammer = talib.CDLHAMMER(df['Open'], df['High'], df['Low'], df['Close'])
+df['hammer'] = hammer
+df['Signal'] = 0
+
+# Function to create signals based on Hammer pattern
+def createsignal(hammer):
+    signal = []
+    i = 0
+    for date, value in hammer.iteritems():
+        if value > 0:
+            signal.append(df['Low'].iloc[i])
+            df['Signal'].iat[i] = True
+        else:
+            signal.append(np.nan)
+        i += 1
+    return signal
+
+# Create the Hammer signal
+HammerSignal = createsignal(hammer)
+x = df.index.tolist()
+
+# Create a candlestick chart with Hammer signals
+fig = go.Figure(data=[
+    go.Candlestick(x=df.index, open=df.Open, high=df.High, low=df.Low, close=df.Close)
+])
+
+fig.update_layout(xaxis_rangeslider_visible=False)
+fig.update_layout(
+    width=800, height=600,
+    title="INFY Jan 12, 2023",
+    yaxis_title='Price'
+)
+
+# Add Hammer signals to the chart
+fig.add_trace(go.Scatter(
+    x=x,
+    y=HammerSignal,
+    name='hammer',
+    mode="markers",
+    marker_size=10,
+    marker=dict(color='blue', symbol="triangle-down")
+))
+
+# Display the chart
+fig.show()
+
+# Display the last 10 rows of the DataFrame
+df.tail(10)

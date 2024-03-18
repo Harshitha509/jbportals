@@ -1,0 +1,96 @@
+import pymysql
+from app import app
+from config import mysql
+from flask import jsonify
+from flask import flash, request
+ 
+@app.route('/branch/create', methods=['POST'])
+def create_branch():
+    try:        
+        _json = request.json
+        _id = _json['id']
+        _name = _json['name']
+        if _id and _name and request.method == 'POST':
+            conn = mysql.connect()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)		
+            sqlQuery = "INSERT INTO branch(branch_id, branch_name) VALUES(%s, %s)"
+            bindData = (_id, _name)            
+            cursor.execute(sqlQuery, bindData)
+            conn.commit()
+            respone = jsonify('Branch created successfully!')
+            respone.status_code = 200
+            return respone
+        else:
+            return showMessage()
+    except Exception as err:
+        print(err)
+    finally:
+        cursor.close()
+        conn.close()   
+
+@app.route('/student/create', methods=['POST'])
+def create_student():
+    try:
+        _json = request.json
+        _id = _json['id']
+        _name = _json['name']
+        _dob = _json['dob']
+        _branch_id = _json['branch_id']
+        if _id and _name and _dob and _branch_id and request.method == 'POST':
+            conn = mysql.connect()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            select_branch_pk_query = "SELECT branch_pk FROM branch WHERE branch_id = %s"
+            cursor.execute(select_branch_pk_query, (_branch_id,))
+            branch_result = cursor.fetchone()
+            if branch_result:
+                branch_fk = branch_result['branch_pk']
+                insert_student_query = "INSERT INTO student (student_id, student_name, student_dob, branch_fk) VALUES (%s, %s, %s, %s)"
+                bind_data_student = (_id,_name, _dob, branch_fk)
+                cursor.execute(insert_student_query, bind_data_student)
+                conn.commit()
+                response = jsonify('Student created successfully!')
+                response.status_code = 200
+                return response
+            else:
+                return jsonify({'error': 'Branch not found'}), 404
+        else:
+            return showMessage()
+    except Exception as err:
+        print(err)
+        return jsonify({'error': 'Internal Server Error'}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.errorhandler(404)
+def showMessage(error=None):
+    message = {
+        'status': 404,
+        'message': 'Record not found: ' + request.url,
+    }
+    respone = jsonify(message)
+    respone.status_code = 404
+    return respone
+        
+if __name__ == "__main__":
+    app.run()
+
+
+
+from app import app
+from flaskext.mysql import MySQL
+ 
+mysql = MySQL()
+app.config['MYSQL_DATABASE_USER'] = 'root'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'Student123!'
+app.config['MYSQL_DATABASE_DB'] = 'clg'
+app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+mysql.init_app(app)
+
+
+
+from flask import Flask
+from flask_cors import CORS, cross_origin
+
+app = Flask(__name__)
+CORS(app)

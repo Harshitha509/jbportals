@@ -1,0 +1,80 @@
+BRANCH FORM -->
+
+index.html:
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Your React App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+----------------------------------------------------------------------------
+index.js:
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './App';
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+------------------------------------------------------------------------------
+App.js:
+import React from 'react';
+import CreateBanchForm from './CreateBranchForm';
+function App() {
+  return (
+    <div className="App">
+      <CreateBanchForm />
+    </div>
+  );
+}
+export default App;
+------------------------------------------------------------------------------
+CreateBranchForm.jsx:
+import React, { useState } from 'react';
+import axios from 'axios';
+const CreateBranchForm = () => {
+ const [branchId, setBranchId] = useState('');
+ const [branchName, setBranchName] = useState('');
+
+ const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/branch/create', {
+        id: branchId,
+        name: branchName,
+      });
+
+      if (response.status === 200) {
+        alert('Branch created successfully!');
+      }
+    } catch (error) {
+      alert('Error creating branch');
+    }
+ };
+
+ return (
+    <form onSubmit={handleSubmit}>
+      <label>
+        Branch ID:
+        <input type="text" value={branchId} onChange={(e) => setBranchId(e.target.value)} />
+      </label>
+      <br></br><br></br>
+     <label>
+        Branch Name:
+        <input type="text" value={branchName} onChange={(e) => setBranchName(e.target.value)} />
+      </label>
+      <br></br><br></br>
+      <button type="submit">Save</button>
+    </form>
+ );
+};
+
+export default CreateBranchForm;
+

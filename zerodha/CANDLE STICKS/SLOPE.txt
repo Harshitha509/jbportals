@@ -1,0 +1,54 @@
+SLOPE:-
+
+import pandas as pd
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+
+# Read the CSV file into a DataFrame
+df = pd.read_csv("infy5min.csv")
+
+# Keep only relevant columns (Open, High, Low, Close)
+df = df[['Open', 'High', 'Low', 'Close']]
+
+# Create a series for x (index) and y (Close prices)
+x = df.index.to_series()
+y = df.Close
+
+# Calculate the slope and intercept of the linear regression line using numpy's polyfit
+slope, intercept = np.polyfit(x, y, 1)
+
+# Calculate the corresponding y values for the linear regression line
+z = list(slope * x + intercept)
+x1 = list(x)
+
+# Scatter plot of the closing prices
+plt.scatter(x, y, s=50)
+# Plot the linear regression line in red
+plt.plot(x1, z, "r")
+# Show the plot
+plt.show()
+
+# Calculate and display the slope in degrees
+deg = math.degrees(slope)
+print('Slope:', deg)
+
+# Reverse the order of y to analyze the trend in the opposite direction
+y = y.loc[::-1]
+
+# Recalculate the slope and intercept for the reversed y values
+slope, intercept = np.polyfit(x, y, 1)
+z = list(slope * x + intercept)
+x1 = list(x)
+
+# Scatter plot of the reversed closing prices
+plt.scatter(x, y, s=50)
+# Plot the reversed linear regression line in red
+plt.plot(x1, z, "r")
+# Show the plot
+plt.show()
+
+# Calculate and display the reversed slope in degrees
+deg = math.degrees(slope)
+print('Slope (Reversed):', deg)
+

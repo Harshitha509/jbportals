@@ -1,0 +1,54 @@
+PIVOT:-
+
+import pandas as pd
+import numpy as np
+import talib
+import plotly.graph_objects as go
+import datetime
+import warnings
+
+# Ignore warnings
+warnings.filterwarnings('ignore')
+
+# Read the daily price data
+df = pd.read_csv("infy2023.csv")
+
+# Extract relevant columns and format date
+df['Date'] = df['Date'].astype(str).str[4:21]
+df['Date'] = pd.to_datetime(df.Date)
+
+# Select necessary columns for pivot point calculation
+df2 = df[['Date', 'Open', 'High', 'Low', 'Close']]
+
+# Calculate key price levels: Pivot Point, Resistance, and Support levels
+high = round(df2['High'].iloc[-1], 2)
+low = round(df2['Low'].iloc[-1], 2)
+close = round(df2['Close'].iloc[-1], 2)
+
+Pivot_Point = round((high + low + close) / 3, 2)
+Resistance_1 = round(2 * Pivot_Point - low, 2)
+Support_1 = round(2 * Pivot_Point - high, 2)
+Resistance_2 = round(Pivot_Point + high - low, 2)
+Support_2 = round(Pivot_Point - (high - low), 2)
+Resistance_3 = round(Pivot_Point + 2 * (high - low), 2)
+Support_3 = round(Pivot_Point - 2 * (high - low), 2)
+
+# Display the calculated pivot points and levels
+print(f"{Pivot_Point=}\n{Resistance_1=}\n{Support_1=}\n{Resistance_2=}\n{Support_2=}\n{Resistance_3=}\n{Support_3=}")
+
+# Read the intraday price data
+df3 = pd.read_csv("infy5min.csv")
+
+# Extract and format date
+df3['Date'] = df3['Date'].astype(str).str[4:21]
+df3['Date'] = pd.to_datetime(df3.Date)
+
+# Set date as the index
+df3.set_index('Date', inplace=True)
+df3.columns = ['Open', 'High', 'Low', 'Close', 'Pivot Point', 'Resistance 1', 'Support 1', 'Resistance 2', 'Support 2', 'Resistance 3', 'Support 3']
+
+# Create a DataFrame with the last calculated levels
+df4 = pd.DataFrame(df3[['Pivot Point', 'Resistance 1', 'Support 1', 'Resistance 2', 'Support 2', 'Resistance 3', 'Support 3']].iloc[-1].transpose())
+
+# Plot the closing price, pivot point, support, and resistance levels
+df3[['Close', 'Pivot Point', 'Support 1', 'Resistance 1', 'Support 2', 'Resistance 2']].plot(figsize=(18, 9))

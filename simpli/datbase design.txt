@@ -1,0 +1,82 @@
+Tables:
+
+Users:
+user_id (primary key)
+username (unique)
+password (hashed)
+role (enum: admin, staff, parent)
+name
+email
+phone_number
+
+Students:
+student_id (primary key)
+name
+age
+hobbies (text)
+address
+location
+parent_id (foreign key to Users)
+emergency_contact
+physician
+allergies (text)
+chronic_illness (text)
+medication (text)
+special_note (text)
+
+Plans:
+plan_id (primary key)
+name (e.g., Monthly, Half-Yearly, Yearly)
+duration (days)
+price
+
+Enrollments:
+enrollment_id (primary key)
+student_id (foreign key to Students)
+plan_id (foreign key to Plans)
+start_date
+end_date (calculated based on start_date and plan duration)
+
+Attendances:
+attendance_id (primary key)
+student_id (foreign key to Students)
+date
+batch_id (foreign key to Batches)
+status (enum: present, absent)
+
+Batches:
+batch_id (primary key)
+name
+day
+time
+staff_id (foreign key to Users)
+
+
+
+Staff:
+staff_id (foreign key to Users)
+batch_id (foreign key to Batches)
+date
+hours_taught (decimal)
+comment(text)
+
+StaffNotes:
+student_id (foreign key to Students)
+staff_id (foreign key to Users)
+date
+content (text)
+
+Reports:
+report_id (primary key)
+type (enum: daily, monthly, skill_matrix, incidents)
+
+Report_admin:
+id (primary key)
+report_type(daily,monthly, skill_matrix, incidents)
+student_id(foreign key to students)
+date(varchar)
+
+
+
+
+

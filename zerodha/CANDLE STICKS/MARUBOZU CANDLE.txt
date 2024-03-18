@@ -1,0 +1,97 @@
+Marubozu Candle
+
+import pandas as pd
+import numpy as np
+import talib
+import plotly.graph_objects as go
+import datetime
+
+# Read the CSV file into a DataFrame
+df = pd.read_csv("nifty5min.csv")
+
+# Filter the DataFrame for a specific date range
+df = df[(df.Date > '2022-09-04 9:00:00') & (df.Date < '2022-09-05 15:30:00')]
+
+# Set the date as the index and keep relevant columns
+df.set_index("Date", inplace=True)
+df = df[['Open', 'High', 'Low', 'Close']]
+
+# Use TA-Lib to identify Closing Marubozu candles
+marubozu = talib.CDLCLOSINGMARUBOZU(df['Open'], df['High'], df['Low'], df['Close'])
+df['marubozu'] = marubozu
+df['SignalGreen'] = False
+df['SignalRed'] = False
+df['body'] = abs(df['Open'] - df['Close'])
+
+# Function to create signals based on Closing Marubozu pattern
+def createsignal(marubozu):
+    SignalGreen = []
+    SignalRed = []
+    i = 0
+    for date, value in marubozu.iteritems():
+        if value == 100:
+            SignalGreen.append(df['High'].iloc[i] + 10)
+            df['SignalGreen'].iat[i] = True
+            SignalRed.append(np.nan)
+        elif value == -100:
+            SignalRed.append(df['High'].iloc[i] + 10)
+            SignalGreen.append(np.nan)
+            df['SignalRed'].iat[i] = True
+        else:
+            SignalGreen.append(np.nan)
+            SignalRed.append(np.nan)
+        i += 1
+    return SignalGreen, SignalRed
+
+# Identify Closing Marubozu candles
+marubozu[marubozu != 0]
+
+# Create the Closing Marubozu signals
+SignalGreen, SignalRed = createsignal(marubozu)
+x = df.index.tolist()
+
+# Create a candlestick chart with Closing Marubozu signals
+fig = go.Figure(data=[go.Candlestick(x=df.index, open=df.Open, high=df.High, low=df.Low, close=df.Close)])
+
+fig.update_layout(xaxis_rangeslider_visible=False)
+fig.update_layout(
+    width=800, height=600,
+    title="INFY Jan 12, 2023",
+    yaxis_title='Price',
+    xaxis=dict(type="category")
+)
+
+# Add Closing Marubozu signals to the chart
+fig.add_trace(go.Scatter(
+    x=x,
+    y=SignalGreen,
+    name='Marubozu Green',
+    mode="markers",
+    marker_size=10,
+    marker=dict(color='green', symbol="square-dot")
+))
+
+fig.add_trace(go.Scatter(
+    x=x,
+    y=SignalRed,
+    name='Marubozu Red',
+    mode="markers",
+    marker_size=10,
+    marker=dict(color='red', symbol="square-dot")
+))
+
+# Display the chart
+fig.show()
+
+# Calculate additional metrics like upper wick, lower wick, candle size, and candle average
+df['Upper Wick'] = df['Close'] - df['High']
+df['Lower Wick'] = df['Low'] - df['Open']
+df['Candle Size'] = abs(df['Close'] - df['Open'])
+df['Candle Average'] = df['Candle Size'].median()
+
+# Display specific rows based on signals
+df[df.SignalGreen == True]
+
+df[df.SignalRed == True]
+
+df[df.index == '2022-09-05 09:15:00']

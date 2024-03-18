@@ -1,0 +1,42 @@
+INTRODUCTION:
+
+This document details the creation of a student registration and attendance system. The system provides functionalities for:
+
+Student Registration: Admin can register by providing their information through a form.
+Attendance Management: Attendance can be recorded and filtered by batches.
+Attendance Update: Existing attendance records can be updated.
+
+
+IMPLEMENTATION:
+Technology Stack:  React, JavaScript, HTML, CSS, database:MYSQL, server:python
+
+COMPONENTS:
+StudentRegistrationForm: Handles student registration data collection.
+AttendanceForm: Records student attendance.
+AttendanceFilter: Allows filtering attendance by batch.
+AttendanceTable: Displays attendance data with update functionality.
+
+
+FEATURES:
+Student Registration:
+Form collects student information 
+Data is stored in a database upon form submission.
+
+Attendance Management:
+Form enables marking student attendance (present/absent).
+
+Attendance data is associated with the selected batch and date.
+Data is stored in the database upon form submission.
+
+Attendance Filter:
+Provides a filter to select a specific batch.
+Displays attendance data for the chosen batch. 
+
+Attendance Update:
+Allows modifying existing attendance records ( changing present/absent status).
+Updated data is reflected in the database. 
+
+Further Enhancements:
+
+User Authentication: Implement login and authorization functionality for secure access and differentiated user roles (e.g., student, teacher, admin).
+Batch Management: Allow creating, editing, and deleting batches.

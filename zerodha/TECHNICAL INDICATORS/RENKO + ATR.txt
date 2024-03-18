@@ -1,0 +1,43 @@
+RENKO+ATR :-
+
+import datetime as dt
+import pandas as pd
+import mplfinance as fplt
+
+# Read minute-by-minute price data
+ohlcv = pd.read_csv("minute.csv", parse_dates=["date"], index_col="date")
+ohlcv.head(2)
+
+# Function to calculate Average True Range (ATR)
+def ATR(df, range_period):
+    df['High-Low'] = df['high'] - df['low']
+    df['High-Previous_Close'] = abs(df['high'] - df['close'].shift(1))
+    df['Low-Previous_Close'] = abs(df['low'] - df['close'].shift(1))
+    df['True_Range'] = df[['High-Low', 'High-Previous_Close', 'Low-Previous_Close']].max(axis=1, skipna=False)
+    df['ATR'] = df['True_Range'].ewm(com=range_period, min_periods=range_period).mean()
+    return df
+
+# Calculate ATR and round off the result to an integer
+bricks = round(ATR(ohlcv, 50).iloc[-1]["ATR"], 0)
+print(bricks)
+
+# Dictionary to capture calculated values during renko plot
+retvals = {}
+
+# Plot Renko chart with ATR
+fplt.plot(ohlcv, type='renko', renko_params=dict(brick_size=bricks, atr_length=14),
+          style='yahoo', figsize=(18, 7),
+          title="RENKO CHART WITH ATR {0}".format('Nifty'), return_calculated_values=retvals)
+
+# Create DataFrame from calculated values
+df_result = pd.DataFrame(retvals)
+
+# Display the first 5 rows of the DataFrame with renko dates, bricks, and colors
+df_result[['renko_dates', 'renko_bricks', 'color']].head(5)
+
+# Add a 'color' column based on the direction of renko bricks
+import numpy as np
+df_result['color'] = np.where(df_result.renko_bricks >= df_result.renko_bricks.shift(1), 'Green', 'Red')
+
+# Display the last 5 rows of the DataFrame with renko dates, bricks, and colors
+df_result[['renko_dates', 'renko_bricks', 'color']].tail()

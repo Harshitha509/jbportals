@@ -1,0 +1,67 @@
+Shooting Star Candle
+
+import pandas as pd
+import numpy as np
+import talib
+import plotly.graph_objects as go
+import datetime
+
+# Read the CSV file into a DataFrame
+df = pd.read_csv("nifty5min.csv")
+
+# Set the date as the index and keep relevant columns
+df.set_index("Date", inplace=True)
+df = df[['Open', 'High', 'Low', 'Close']]
+
+# Use TA-Lib to identify Shooting Star candles
+star = talib.CDLSHOOTINGSTAR(df['Open'], df['High'], df['Low'], df['Close'])
+df['star'] = star
+df['Signal'] = 0
+
+# Function to create signals based on Shooting Star pattern
+def createsignal(star):
+    signal = []
+    i = 0
+    for date, value in star.iteritems():
+        if value != 0:
+            signal.append(df['Low'].iloc[i] - 25)
+            df['Signal'].iat[i] = True
+        else:
+            signal.append(np.nan)
+        i += 1
+    return signal
+
+# Identify Shooting Star candles
+star[star < 0]
+
+# Create the Shooting Star signal
+starSignal = createsignal(star)
+x = df.index.tolist()
+
+# Create a candlestick chart with Shooting Star signals
+fig = go.Figure(data=[
+    go.Candlestick(x=df.index, open=df.Open, high=df.High, low=df.Low, close=df.Close)
+])
+
+fig.update_layout(xaxis_rangeslider_visible=False)
+fig.update_layout(
+    width=800, height=600,
+    title="INFY Jan 12, 2023",
+    yaxis_title='Price',
+    xaxis=dict(type="category")
+)
+
+# Add Shooting Star signals to the chart
+fig.add_trace(go.Scatter(
+    x=x,
+    y=starSignal,
+    name='ShootingStar',
+    mode="markers",
+    marker_size=10,
+    marker=dict(color='blue', symbol="arrow-up")
+))
+
+# Display the chart
+fig.show()
+
+

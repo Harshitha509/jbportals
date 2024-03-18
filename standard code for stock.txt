@@ -1,0 +1,128 @@
+app.js
+
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import ReactTable from 'react-table-6';
+import 'react-table-6/react-table.css';
+import { format } from 'date-fns';
+import './App.css';
+
+const StockTable = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stockNameFilter, setStockNameFilter] = useState('');
+
+  const isStopLossTriggered = useCallback((row) => row.stopLossTriggerDate !== null && row.stopLossTriggerDate !== '', []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5000/list/stocks`);
+        setData(response.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [stockNameFilter, isStopLossTriggered]);
+
+  const filteredData = data.filter((row) => {
+    const matchesStockName = row.stockName.toLowerCase().includes(stockNameFilter.toLowerCase());
+    return matchesStockName;
+  });
+
+  const getRowStyle = (rowInfo) => {
+    if (!rowInfo || !rowInfo.original) {
+      return {};
+    }
+
+    return {
+      backgroundColor: isStopLossTriggered(rowInfo.original) ? 'red' : 'white',
+    };
+  };
+
+  const columns = [
+    { Header: 'Stock Name', accessor: 'stockName', sortable: false },
+    { Header: 'Buy Price', accessor: 'buyPrice', sortable: false },
+    { Header: 'Buy Date', accessor: 'buyDate', Cell: ({ value }) => format(new Date(value), 'dd/MM/yyyy'), sortable: false },
+    { Header: 'Sell Price', accessor: 'sellPrice', sortable: false },
+    { Header: 'Sell Date', accessor: 'sellDate', Cell: ({ value }) => format(new Date(value), 'dd/MM/yyyy'), sortable: false },
+    { Header: 'Profit', accessor: 'profit', sortable: false },
+    { Header: 'Stop Loss Trigger Date', accessor: 'stopLossTriggerDate', Cell: ({ value }) => format(new Date(value), 'dd/MM/yyyy'), sortable: false },
+    { Header: 'Current Price', accessor: 'current_price', sortable: false },
+  ];
+
+  return (
+    <div>
+      <h1>Stock Tracker</h1>
+      <div className='search-box'>
+        <input
+          type="text"
+          value={stockNameFilter}
+          onChange={(e) => setStockNameFilter(e.target.value)}
+          placeholder="Filter by Stock Name"
+        />
+        {loading ? (
+          <p>Loading...</p>
+        ) : (
+          <ReactTable
+            data={filteredData}
+            columns={columns}
+            getTrProps={(state, rowInfo) => ({
+              style: getRowStyle(rowInfo),
+            })}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default StockTable;
+
+
+main.py
+
+import pymysql
+from app import app
+from config import mysql
+from flask import jsonify
+from flask import flash, request
+from flask import render_template
+
+@app.route('/list/stocks', methods=['GET'])
+def get_stocks():
+    cursor = None
+    conn = None
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+
+        filter_param = request.args.get('filter', default='', type=str)
+        if filter_param:
+            sql_query = f"SELECT * FROM StockInfo WHERE stockName LIKE '%{filter_param}%'"
+        else:
+            sql_query = 'SELECT * FROM StockInfo'
+
+        cursor.execute(sql_query)
+        stocks = cursor.fetchall()
+        for stock in stocks:
+            stock['stopLossTriggered'] = stock['stopLossTriggerDate'] is not None and stock['stopLossTriggerDate'] != ''
+
+        response = jsonify(stocks)
+        response.status_code = 200
+        return response
+  
+    except Exception as err:
+        print(err)
+        return jsonify({'error': 'Internal Server Error'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+if __name__ == "__main__":
+    app.run()

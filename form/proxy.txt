@@ -1,0 +1,14 @@
+proxy=http://proxy.company.com:8080
+https-proxy=http://192.168.141.74:8080
+legacy-peer-deps=true
+registry=http://registry.npmjs.org/
+
+
+{
+  "id": "06",
+  "name": "rohan",
+  "dob": "18-AUG-2003",
+"branch_id": "CIV",
+  "branch_name":"civil"
+  
+}

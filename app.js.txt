@@ -1,0 +1,310 @@
+import React from 'react';
+import { BrowserRouter, BrowserRouter as  Route, Routes } from 'react-router-dom';
+import LoginForm from './components/LoginForm';
+import SignupForm from './components/SignUpForm';
+import Admin from './components/Admin';
+import Staff from './components/Staff';
+import Parent from './components/Parent';
+import Navbar from './navbar';
+
+const App = () => {
+  return (
+    
+    <BrowserRouter>
+    <Routes>
+    <Navbar />
+    
+    
+      
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/signup" element={<SignupForm />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/staff" element={<Staff />} />
+        <Route path="/parent" element={<Parent />} />
+      </Routes>
+      </BrowserRouter>
+    
+    
+    
+  );
+}
+
+export default App;
+
+
+export default App;
+
+navbar.js
+import React from 'react';
+import {Link} from 'react-router-dom';
+
+const Navbar=()=>{
+    return (    
+                <div className='navBar'>
+                    <div className='Admin'>
+                        <Link to="/Admin">Admin</Link>
+                    </div>
+                    <div className='signup'>
+                        <Link to="/signup">signup</Link>
+                </div>
+                    <div className='login'>
+                        <Link to="/login">Login</Link>
+                    </div>
+                    <div className='Staff'>
+                        <Link to="/Staff">Staff</Link>
+                    </div>
+                    <div className='Parent'>
+                        <Link to="/Parent">Parent</Link>
+                    </div>
+                </div>
+    )
+
+}
+
+export default Navbar;
+
+loginform.js
+// LoginForm.js
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const LoginForm = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch(' http://127.0.0.1:5000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        navigate.push(`/${data.user_role.toLowerCase()}`);
+      } else {
+        // Handle login failure, show an error message, etc.
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Login</h2>
+      <form>
+        <label htmlFor="Email">Email:</label>
+        <input
+          type="text"
+          id="Email"
+          name="Email"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+
+        <label htmlFor="password">Password:</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+
+        <button type="submit" onSubmit={handleLogin}>
+          Login
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default LoginForm;
+signup.js
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const SignupForm = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [userTitle, setUserTitle] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userMobile, setUserMobile] = useState('');
+  const navigate = useNavigate();
+
+  const handleSignup = async () => {
+    try {
+      let isValid = true;
+
+      // Additional validation based on the role
+      if (role === 'admin') {
+        // No additional fields required for admin signup
+      } else {
+        // Additional validation for other roles if needed
+        if (!firstName || !lastName || !userEmail || !userMobile || password !== confirmPassword) {
+          isValid = false;
+          alert('All fields are required for non-admin roles, and passwords must match');
+        }
+      }
+
+      if (isValid) {
+        const response = await fetch('http://127.0.0.1:5000/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username,
+            password,
+            confirm_password: confirmPassword, // Added confirm_password
+            role,
+            first_name: firstName,
+            last_name: lastName,
+            user_title: userTitle,
+            user_email: userEmail,
+            user_mobile: userMobile,
+          }),
+        });
+
+        if (response.ok) {
+          navigate.push('/login');
+        } else {
+          // Handle signup failure, show an error message, etc.
+        }
+      }
+    } catch (error) {
+      console.error('Error during signup:', error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Sign Up</h2>
+      <form>
+      <label htmlFor="Email">Email:</label>
+        <input
+          type="text"
+          id="Email"
+          name="Email"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+
+        <label htmlFor="password">Password:</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+
+        <label htmlFor="role">Role:</label>
+        <select
+          id="role"
+          name="role"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          required
+        >
+          <option value="admin">Admin</option>
+          <option value="staff">Staff</option>
+          <option value="parent">Parent</option>
+        </select>
+
+        {/* Additional fields for non-admin roles */}
+        {role !== 'admin' && (
+          <>
+            <label htmlFor="first_name">First Name:</label>
+            <input
+              type="text"
+              id="first_name"
+              name="first_name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+            />
+
+            <label htmlFor="last_name">Last Name:</label>
+            <input
+              type="text"
+              id="last_name"
+              name="last_name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+            />
+
+            <label htmlFor="user_title">Title:</label>
+            <select
+              id="user_title"
+              name="user_title"
+              value={userTitle}
+              onChange={(e) => setUserTitle(e.target.value)}
+            >
+              <option value="Mr">Mr</option>
+              <option value="Mrs">Mrs</option>
+              <option value="Ms">Ms</option>
+            </select>
+
+            <label htmlFor="user_email">Email:</label>
+            <input
+              type="text"
+              id="user_email"
+              name="user_email"
+              value={userEmail}
+              onChange={(e) => setUserEmail(e.target.value)}
+              required
+            />
+
+            <label htmlFor="user_mobile">Mobile:</label>
+            <input
+              type="text"
+              id="user_mobile"
+              name="user_mobile"
+              value={userMobile}
+              onChange={(e) => setUserMobile(e.target.value)}
+              required
+            />
+          </>
+        )}
+
+
+        {role !== 'admin' && (
+          <>
+            <label htmlFor="confirmPassword">Confirm Password:</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </>
+        )}
+
+        <button type="submit" onSubmit={handleSignup}>
+          Sign Up
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default SignupForm;
+

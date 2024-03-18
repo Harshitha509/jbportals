@@ -1,0 +1,53 @@
+ ATR - Average True Range
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Read the OHLC data from a CSV file
+df = pd.read_csv("nifty.csv", parse_dates=["date"], index_col="date")
+df.head(2)
+
+# Calculate components for ATR (Average True Range) calculation
+df['High-Low'] = df['high'] - df['low']
+df['High-Previous_Close'] = abs(df['high'] - df['close'].shift(1))
+df['Low-Previous_Close'] = abs(df['low'] - df['close'].shift(1))
+
+# Calculate True Range and its Exponential Moving Average (ATR)
+df['True_Range'] = df[['High-Low', 'High-Previous_Close', 'Low-Previous_Close']].max(axis=1, skipna=False)
+range_period = 14
+df['ATR'] = df['True_Range'].ewm(com=range_period, min_periods=range_period).mean()
+
+# Drop rows with missing values
+df.dropna(inplace=True)
+
+# Extract data for plotting
+close = df['close'].tolist()
+ATR = df['ATR'].tolist()
+index = df.index.tolist()
+
+# Create a subplot with two y-axes to show close prices and ATR
+fg, ax = plt.subplots(nrows=1, ncols=1, figsize=(36, 18), sharex=True)
+ax.set_ylim(min(close) - 100, max(close) + 100)
+
+# Plot close prices on the left y-axis
+ax.plot(index, close, label='close', color='gray')
+ax.legend(loc="upper left")
+
+# Create a twin y-axis for ATR on the right side
+ax2 = ax.twinx()
+ax2.plot(index, ATR, color='green', label='ATR')
+ax2.legend(loc="upper right")
+
+# Calculate Bollinger Bands using rolling mean and standard deviation
+sma = df.close.rolling(range_period).mean()
+std = df.close.rolling(range_period).std()
+df['bollinger_up'] = sma + std * 2
+df['bollinger_down'] = sma - std * 2
+
+# Plot close prices, upper and lower Bollinger Bands for the year 2020
+df.loc["2020"][['close', 'bollinger_up', 'bollinger_down']].plot(figsize=(36, 18))
+plt.legend()
+
+# Show the plot
+plt.show()

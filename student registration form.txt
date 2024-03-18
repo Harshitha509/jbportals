@@ -1,0 +1,21 @@
+import React,{useState} from 'react';
+import axios from 'axios';
+const StudentRegistration = () => {
+    const [studentId, setStudentId] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [batchName, setBatchName] = useState('');
+    const [DOB, setDOB] = useState('');
+    const [studentHobbies, setStudentHobbies] = useState('');
+    const [studentAdd, setStudentAdd] = useState('');
+    const [studentLocation, setStudentLocation] = useState('');
+    const [studentEmergencyContact, setStudentEmergencyLocation] = useState('');
+    const [studentPhysician, setStudentPhysician] = useState('');
+    const [studentChronicIllness, setStudentChronicIllness] = useState('');
+    const [studentMedicines, setStudentMedicines] = useState('');
+    const [studentSpecialNote, setStudentSpecialNote] = useState('');
+    
+    const handleSubmit = async (e) => {
+     e.preventDefault();
+     try {
+        const

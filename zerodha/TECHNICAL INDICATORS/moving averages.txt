@@ -1,0 +1,28 @@
+MOVING AVERAGES:-
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+df = pd.read_csv("nifty.csv", parse_dates=["date"], index_col="date")
+df.head()
+
+#DROPPING UNNECESSARY COULUMNS
+df.drop('open',axis='columns', inplace=True)
+df.drop('high',axis='columns', inplace=True)
+df.drop('low',axis='columns', inplace=True)
+df.head()
+
+#CALCULATING SLOW MOVING AVERAGE
+df["SMA"] = df['close'].rolling(26, min_periods=1).mean()
+
+#CALCULATING SLOW MOVING EXPONENTIAL AVERAGE
+df["Slow_EMA"] = df['close'].ewm(span=26, adjust=False).mean()
+
+#CALCULATING FAST MOVING EXPONENTIAL AVERAGE
+df["Fast_EMA"] = df['close'].ewm(span=12, adjust=False).mean()
+df
+
+df.dropna(inplace=True)
+df.plot(figsize=(12,18), title="NIFTY SMA{} | EMA{}".format(26, 26), fontsize=12)
+plt.legend(fontsize=12)
+plt.show()

@@ -1,0 +1,52 @@
+Doji Candle:-
+
+import pandas as pd
+import numpy as np
+import talib
+import mplfinance as mpf
+import datetime
+import matplotlib.pyplot as plt
+
+# Set the plotting style
+plt.style.use('fivethirtyeight')
+
+# Read the CSV file into a DataFrame
+df = pd.read_csv("TATASTEEL.csv")
+
+# Extract and format date
+df['Date'] = df['Date'].astype(str).str[4:21]
+df['Date'] = pd.to_datetime(df['Date'])
+
+# Filter data for dates after '2023-01-10 9:10:00'
+df = df[df['Date'] > '2023-01-10 9:10:00']
+
+# Set the date as the index
+df.set_index("Date", inplace=True)
+
+# Use TA-Lib to identify Doji candles
+doji = talib.CDLDOJI(df['Open'], df['High'], df['Low'], df['Close'])
+df['Doji'] = doji
+df['Signal'] = 0
+
+# Function to create signals based on Doji pattern
+def createsignal(doji):
+    signal = []
+    for date, value in doji.iteritems():
+        if value > 0:
+            signal.append(1)
+        else:
+            signal.append(np.nan)
+    return signal
+
+# Create the Doji signal
+DojiSignal = createsignal(doji)
+df['Signal'] = DojiSignal
+
+# Create an additional plot for Doji signals
+apd = mpf.make_addplot(DojiSignal, type='scatter', markersize=200, marker='^', color='green')
+
+# Plot the candlestick chart with Doji signals
+mpf.plot(df, addplot=apd, type='candle', style='charles', title='Tata Steel Jan 10, 2023')
+
+# Display rows where the Doji signal is present (Signal = 1)
+df[df.Signal == 1]

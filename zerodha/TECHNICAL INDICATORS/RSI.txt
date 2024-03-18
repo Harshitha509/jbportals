@@ -1,0 +1,73 @@
+Relative Strength Indicator (RSI)
+
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Read the OHLC data from a CSV file
+df = pd.read_csv("nifty.csv", parse_dates=["date"], index_col="date")
+
+# Reset the index for additional processing
+df.reset_index(inplace=True)
+
+# Drop unnecessary columns
+df.drop('open', inplace=True, axis='columns')
+df.drop('low', inplace=True, axis='columns')
+df.drop('high', inplace=True, axis='columns')
+
+# Create 'Gains' and 'Losses' columns
+df['Gains'] = np.where(df.close > df.close.shift(1), df.close - df.close.shift(1), 0)
+df['Losses'] = np.where(df.close.shift(1) > df.close, df.close.shift(1) - df.close, 0)
+
+# Remove the first row (NaN values)
+df = df[1:]
+
+# Set the range period for calculations
+range_period = 14
+
+# Initialize 'AvgGain' and 'AvgLoss' columns
+df['AvgGain'] = None
+df['AvgLoss'] = None
+
+# Calculate initial average gains and losses
+df.at[range_period + 1, 'AvgGain'] = df.Gains[:14].mean()
+df.at[range_period + 1, 'AvgLoss'] = df.Losses[:14].mean()
+
+# Reset index and drop the 'index' column
+df = df[14:].reset_index()
+df.drop('index', axis='columns', inplace=True)
+
+# Calculate subsequent average gains and losses
+for i in range(1, len(df)):
+    df.at[i, 'AvgGain'] = (df.AvgGain[i-1] * (range_period - 1) + df.Gains[i]) / range_period
+    df.at[i, 'AvgLoss'] = (df.AvgLoss[i-1] * (range_period - 1) + df.Losses[i]) / range_period
+
+# Calculate Relative Strength and RSI
+df['Rel_Strength'] = df.AvgGain / df.AvgLoss
+df['RSI'] = (100 - 100 / (1 + df.Rel_Strength)).astype(int)
+
+# Set the date as the index
+df.set_index('date', inplace=True)
+
+# Extract relevant data for the year 2020
+d = df.loc['2020'][['close', 'RSI']]
+
+# Convert data to lists for plotting
+RSI = d['RSI'].tolist()
+close = d['close'].tolist()
+index = d.index.tolist()
+
+# Plotting
+fg = plt.figure(figsize=(9, 9))  
+plt.subplot(2, 1, 1)
+plt.plot(index, close, label='close', color='gray')
+plt.title("close")
+
+plt.subplot(2, 1, 2)
+plt.plot(index, RSI, label='RSI', c='Orange')
+plt.title("RSI")
+
+# Show the plot
+plt.show()
