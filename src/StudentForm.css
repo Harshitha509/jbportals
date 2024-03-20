@@ -1,0 +1,23 @@
+/* StudentForm.css */
+
+.student-list {
+  margin-top: 20px;
+}
+
+.student-list h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.student-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.student-list li {
+  margin-bottom: 10px;
+}
+.up
+{
+  margin: 10px;
+}
